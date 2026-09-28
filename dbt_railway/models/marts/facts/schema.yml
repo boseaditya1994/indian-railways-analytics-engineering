@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: fact_station_arrival
+    description: "Grain: one row per train + journey date + station stop."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [train_number, journey_date, station_code, station_sequence]
+    columns:
+      - name: train_number
+        tests: [not_null]
+      - name: journey_date
+        tests: [not_null]
+      - name: station_sequence
+        tests: [not_null]

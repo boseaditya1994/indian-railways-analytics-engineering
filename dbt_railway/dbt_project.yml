@@ -1,0 +1,28 @@
+name: railway_analytics
+version: 0.1.0
+config-version: 2
+profile: railway_analytics
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  railway_analytics:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      dimensions:
+        +materialized: table
+      facts:
+        +materialized: incremental
+      analytics:
+        +materialized: table
+      features:
+        +materialized: incremental

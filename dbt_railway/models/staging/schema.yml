@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: stg_train_running
+    description: Latest canonical record for each train, journey date, and station stop.
+    columns:
+      - name: train_number
+        tests: [not_null]
+      - name: journey_date
+        tests: [not_null]
+      - name: station_code
+        tests: [not_null]
+      - name: station_sequence
+        tests: [not_null]

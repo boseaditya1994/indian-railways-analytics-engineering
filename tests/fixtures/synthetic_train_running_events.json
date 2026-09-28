@@ -1,0 +1,14 @@
+{
+  "fixture_type": "synthetic_test_data_only",
+  "must_not_be_presented_as": "historical Indian Railways operational data",
+  "records": [
+    {
+      "train_number": "TEST001",
+      "journey_date": "2024-01-01",
+      "station_code": "TSTA",
+      "station_sequence": 1,
+      "source_name": "synthetic_test_fixture",
+      "arrival_delay_minutes": 5.0
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: dim_train
+    description: One row per observed current train master record.
+    columns:
+      - name: train_number
+        tests: [not_null, unique]
+  - name: dim_station
+    description: One row per observed current station record.
+    columns:
+      - name: station_code
+        tests: [not_null, unique]
+  - name: dim_route_stop
+    description: One row per train schedule and station sequence.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [train_number, station_code, station_sequence]

@@ -1,0 +1,15 @@
+# Copy to ~/.dbt/profiles.yml when a Snowflake account is ready.
+# Keep credentials in environment variables or an external browser login, never in Git.
+railway_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT', 'not_configured') }}"
+      user: "{{ env_var('SNOWFLAKE_USER', 'not_configured') }}"
+      authenticator: externalbrowser
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'RAIL_DELAY_ENGINEER') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'COMPUTE_WH') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'RAIL_DELAY_ANALYTICS') }}"
+      schema: "{{ env_var('SNOWFLAKE_SCHEMA', 'RAW') }}"
+      threads: 4

@@ -1,0 +1,27 @@
+version: 2
+
+sources:
+  - name: raw
+    database: "{{ env_var('SNOWFLAKE_DATABASE', 'RAIL_DELAY_ANALYTICS') }}"
+    schema: RAW
+    tables:
+      - name: train_running_events
+        description: Immutable source records at train journey and station-stop grain.
+        columns:
+          - name: source_record_hash
+            tests: [not_null]
+          - name: ingested_at
+            tests: [not_null]
+      - name: train_schedule_stops
+        description: Approved timetable seed records, versioned by source ingestion time.
+        columns:
+          - name: train_number
+            tests: [not_null]
+          - name: station_code
+            tests: [not_null]
+
+  - name: ml
+    database: "{{ env_var('SNOWFLAKE_DATABASE', 'RAIL_DELAY_ANALYTICS') }}"
+    schema: ML
+    tables:
+      - name: fact_prediction

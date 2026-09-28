@@ -1,0 +1,14 @@
+# CI-only structural parse profile. It contains no credential and parse does not connect.
+railway_analytics:
+  target: ci
+  outputs:
+    ci:
+      type: snowflake
+      account: ci_account
+      user: ci_user
+      authenticator: externalbrowser
+      role: CI_ROLE
+      warehouse: CI_WH
+      database: RAIL_DELAY_ANALYTICS
+      schema: RAW
+      threads: 1

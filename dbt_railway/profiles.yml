@@ -1,0 +1,17 @@
+railway_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'ACCOUNTADMIN') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'COMPUTE_WH') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'RAIL_DELAY_ANALYTICS') }}"
+      schema: "{{ env_var('SNOWFLAKE_DBT_SCHEMA', 'ANALYTICS') }}"
+      # Snowflake can return an internal error when concurrent dbt workers
+      # initialise the same schema. This portfolio workload is modest, so use
+      # one deterministic worker until a dedicated deployment schema exists.
+      threads: 1
+      client_session_keep_alive: false
