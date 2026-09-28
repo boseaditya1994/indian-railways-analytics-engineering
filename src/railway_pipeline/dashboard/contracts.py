@@ -20,6 +20,9 @@ class NetworkOverview(BaseModel):
     average_arrival_delay_minutes: float | None = None
     median_arrival_delay_minutes: float | None = None
     on_time_or_early_percent: float | None = None
+    station_stop_observations: int | None = None
+    coverage_start_date: str | None = None
+    coverage_end_date: str | None = None
 
 
 class PipelineHealth(BaseModel):
@@ -43,3 +46,13 @@ class LiveTrainStatus(BaseModel):
     next_station_name: str | None = None
     provider_updated_at: datetime | None = None
     cached: bool = False
+
+
+class PredictionSummary(BaseModel):
+    data_status: DataStatus
+    model_name: str | None = None
+    evaluation_rows: int | None = None
+    mae_minutes: float | None = None
+    rmse_minutes: float | None = None
+    global_mean_mae_minutes: float | None = None
+    accepted_for_prediction: bool | None = None

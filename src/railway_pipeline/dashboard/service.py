@@ -14,6 +14,7 @@ from railway_pipeline.dashboard.contracts import (
     LiveTrainStatus,
     NetworkOverview,
     PipelineHealth,
+    PredictionSummary,
 )
 
 
@@ -90,14 +91,16 @@ class SnowflakeDashboardMartRepository:
                     """
                     SELECT
                         COUNT(DISTINCT CONCAT(TRAIN_NUMBER, '|', JOURNEY_DATE::VARCHAR)),
+                        COUNT(*),
                         AVG(ARRIVAL_DELAY_MINUTES),
                         MEDIAN(ARRIVAL_DELAY_MINUTES),
-                        AVG(IFF(ARRIVAL_DELAY_MINUTES <= 0, 1, 0)) * 100
+                        AVG(IFF(ARRIVAL_DELAY_MINUTES <= 0, 1, 0)) * 100,
+                        MIN(JOURNEY_DATE), MAX(JOURNEY_DATE)
                     FROM RAIL_DELAY_ANALYTICS.ANALYTICS.FACT_STATION_ARRIVAL
                     WHERE ARRIVAL_DELAY_MINUTES IS NOT NULL
                     """
                 )
-                journeys, average, median, on_time = cursor.fetchone()
+                journeys, observations, average, median, on_time, coverage_start, coverage_end = cursor.fetchone()
                 cursor.execute("SELECT COUNT(*) FROM RAIL_DELAY_ANALYTICS.ANALYTICS.DIM_STATION")
                 stations = cursor.fetchone()[0]
                 cursor.execute(
@@ -121,6 +124,9 @@ class SnowflakeDashboardMartRepository:
                 average_arrival_delay_minutes=float(average) if average is not None else None,
                 median_arrival_delay_minutes=float(median) if median is not None else None,
                 on_time_or_early_percent=float(on_time) if on_time is not None else None,
+                station_stop_observations=int(observations or 0),
+                coverage_start_date=coverage_start.isoformat() if coverage_start else None,
+                coverage_end_date=coverage_end.isoformat() if coverage_end else None,
             )
         except Exception:
             return NetworkOverview(data_status=self._unavailable_status())
@@ -159,6 +165,26 @@ class SnowflakeDashboardMartRepository:
             )
         except Exception:
             return PipelineHealth(data_status=self._unavailable_status())
+
+    def prediction_summary(self) -> PredictionSummary:
+        if not self.configured:
+            return PredictionSummary(data_status=DataStatus(state="not_configured", message="Dashboard server credentials have not been configured."))
+        try:
+            with self._connection() as connection, connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT EVALUATED_AT, VALIDATION_ROW_COUNT, MAE, RMSE, BASELINE_MAE, ACCEPTED_FOR_PREDICTION, MODEL_NAME
+                    FROM RAIL_DELAY_ANALYTICS.ML.MODEL_EVALUATION_AUDIT ORDER BY EVALUATED_AT DESC LIMIT 1
+                """)
+                row = cursor.fetchone()
+            if not row:
+                return PredictionSummary(data_status=DataStatus(state="not_evaluated", message="No chronologically evaluated prediction baseline is available yet."))
+            return PredictionSummary(
+                data_status=DataStatus(state="ready", message="Metrics are from an untouched chronological holdout.", last_successful_pipeline_at=row[0]),
+                evaluation_rows=int(row[1]), mae_minutes=float(row[2]), rmse_minutes=float(row[3]),
+                global_mean_mae_minutes=float(row[4]), accepted_for_prediction=bool(row[5]), model_name=str(row[6]),
+            )
+        except Exception:
+            return PredictionSummary(data_status=self._unavailable_status())
 
 
 class RailRadarLiveStatusRepository:

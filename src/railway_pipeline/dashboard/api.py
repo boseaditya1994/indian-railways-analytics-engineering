@@ -34,6 +34,10 @@ def create_app() -> FastAPI:
     def pipeline_health():
         return repository.pipeline_health()
 
+    @app.get("/v1/dashboard/prediction-summary")
+    def prediction_summary():
+        return repository.prediction_summary()
+
     @app.get("/v1/live/trains/{train_number}")
     def live_train_status(
         train_number: str,
