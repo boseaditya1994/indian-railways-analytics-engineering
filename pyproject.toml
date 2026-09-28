@@ -21,6 +21,7 @@ dependencies = [
 warehouse = ["snowflake-connector-python>=3.13,<4"]
 ml = ["pandas>=2.2,<3", "scikit-learn>=1.6,<2"]
 dashboard = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1"]
+scheduler = ["keyring>=25,<26"]
 dev = ["pytest>=8.3,<9", "pytest-cov>=6.0,<7", "ruff>=0.9,<1"]
 
 [project.scripts]
