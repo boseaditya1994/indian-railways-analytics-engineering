@@ -38,6 +38,9 @@ class UnavailableDashboardMartRepository:
     def pipeline_health(self) -> PipelineHealth:
         return PipelineHealth(data_status=self.status)
 
+    def insights_unavailable(self) -> dict[str, object]:
+        return {"data_status": self.status}
+
 
 class SnowflakeDashboardMartRepository:
     """Read-only, server-side access to published Snowflake marts.
@@ -185,6 +188,131 @@ class SnowflakeDashboardMartRepository:
             )
         except Exception:
             return PredictionSummary(data_status=self._unavailable_status())
+
+    def delay_distribution(self) -> dict[str, object]:
+        try:
+            with self._connection() as connection, connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT
+                        CASE
+                            WHEN ARRIVAL_DELAY_MINUTES <= 0 THEN 'On time / early'
+                            WHEN ARRIVAL_DELAY_MINUTES <= 15 THEN '1–15 min'
+                            WHEN ARRIVAL_DELAY_MINUTES <= 30 THEN '16–30 min'
+                            WHEN ARRIVAL_DELAY_MINUTES <= 60 THEN '31–60 min'
+                            ELSE '60+ min'
+                        END AS DELAY_BAND,
+                        CASE
+                            WHEN ARRIVAL_DELAY_MINUTES <= 0 THEN 1
+                            WHEN ARRIVAL_DELAY_MINUTES <= 15 THEN 2
+                            WHEN ARRIVAL_DELAY_MINUTES <= 30 THEN 3
+                            WHEN ARRIVAL_DELAY_MINUTES <= 60 THEN 4
+                            ELSE 5
+                        END AS BAND_ORDER,
+                        COUNT(*) AS OBSERVATIONS
+                    FROM RAIL_DELAY_ANALYTICS.ANALYTICS.FACT_STATION_ARRIVAL
+                    WHERE ARRIVAL_DELAY_MINUTES IS NOT NULL
+                    GROUP BY DELAY_BAND, BAND_ORDER
+                    ORDER BY BAND_ORDER
+                    """
+                )
+                rows = cursor.fetchall()
+            return {
+                "data_status": DataStatus(state="ready", message="Delay bands are from RSTGCN September 2024."),
+                "bands": [{"label": str(row[0]), "observations": int(row[2])} for row in rows],
+            }
+        except Exception:
+            return {"data_status": self._unavailable_status(), "bands": []}
+
+    def station_hotspots(self, limit: int) -> dict[str, object]:
+        try:
+            with self._connection() as connection, connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT STATION_CODE, COUNT(*) AS OBSERVATIONS,
+                           AVG(ARRIVAL_DELAY_MINUTES) AS AVERAGE_DELAY,
+                           MEDIAN(ARRIVAL_DELAY_MINUTES) AS MEDIAN_DELAY,
+                           AVG(IFF(ARRIVAL_DELAY_MINUTES <= 0, 1, 0)) * 100 AS ON_TIME_PERCENT
+                    FROM RAIL_DELAY_ANALYTICS.ANALYTICS.FACT_STATION_ARRIVAL
+                    WHERE ARRIVAL_DELAY_MINUTES IS NOT NULL
+                    GROUP BY STATION_CODE
+                    HAVING COUNT(*) >= 30
+                    ORDER BY AVERAGE_DELAY DESC, OBSERVATIONS DESC, STATION_CODE
+                    LIMIT %s
+                    """,
+                    (limit,),
+                )
+                rows = cursor.fetchall()
+            return {
+                "data_status": DataStatus(state="ready", message="Station rankings require at least 30 observations."),
+                "stations": [
+                    {"station_code": str(row[0]), "observations": int(row[1]), "average_delay_minutes": float(row[2]), "median_delay_minutes": float(row[3]), "on_time_percent": float(row[4])}
+                    for row in rows
+                ],
+            }
+        except Exception:
+            return {"data_status": self._unavailable_status(), "stations": []}
+
+    def daily_trend(self) -> dict[str, object]:
+        try:
+            with self._connection() as connection, connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT JOURNEY_DATE, COUNT(*), AVG(ARRIVAL_DELAY_MINUTES), MEDIAN(ARRIVAL_DELAY_MINUTES)
+                    FROM RAIL_DELAY_ANALYTICS.ANALYTICS.FACT_STATION_ARRIVAL
+                    WHERE ARRIVAL_DELAY_MINUTES IS NOT NULL
+                    GROUP BY JOURNEY_DATE
+                    ORDER BY JOURNEY_DATE
+                    """
+                )
+                rows = cursor.fetchall()
+            return {
+                "data_status": DataStatus(state="ready", message="Daily aggregates cover September 2024 only."),
+                "days": [{"journey_date": row[0].isoformat(), "observations": int(row[1]), "average_delay_minutes": float(row[2]), "median_delay_minutes": float(row[3])} for row in rows],
+            }
+        except Exception:
+            return {"data_status": self._unavailable_status(), "days": []}
+
+    def train_profile(self, train_number: str) -> dict[str, object]:
+        try:
+            with self._connection() as connection, connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT COUNT(DISTINCT JOURNEY_DATE), COUNT(*), AVG(ARRIVAL_DELAY_MINUTES),
+                           MEDIAN(ARRIVAL_DELAY_MINUTES), AVG(IFF(ARRIVAL_DELAY_MINUTES <= 0, 1, 0)) * 100
+                    FROM RAIL_DELAY_ANALYTICS.ANALYTICS.FACT_STATION_ARRIVAL
+                    WHERE TRAIN_NUMBER = %s AND ARRIVAL_DELAY_MINUTES IS NOT NULL
+                    """,
+                    (train_number,),
+                )
+                row = cursor.fetchone()
+            if not row or not row[1]:
+                return {"data_status": DataStatus(state="not_found", message="No RSTGCN September 2024 observations exist for that train number.")}
+            return {
+                "data_status": DataStatus(state="ready", message="Historical RSTGCN September 2024 train profile."),
+                "train_number": train_number, "journeys": int(row[0]), "observations": int(row[1]),
+                "average_delay_minutes": float(row[2]), "median_delay_minutes": float(row[3]), "on_time_percent": float(row[4]),
+            }
+        except Exception:
+            return {"data_status": self._unavailable_status()}
+
+    def prospective_archive_summary(self) -> dict[str, object]:
+        try:
+            with self._connection() as connection, connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT COUNT(*), COUNT(DISTINCT TRAIN_NUMBER), MIN(RETRIEVED_AT), MAX(RETRIEVED_AT), AVG(DELAY_MINUTES)
+                    FROM RAIL_DELAY_ANALYTICS.LIVE.RAILRADAR_TRAIN_STATUS_SNAPSHOTS
+                    """
+                )
+                row = cursor.fetchone()
+            return {
+                "data_status": DataStatus(state="ready", message="Prospective RailRadar snapshots are separate from RSTGCN history."),
+                "snapshots": int(row[0]), "trains": int(row[1]), "first_retrieved_at": row[2], "latest_retrieved_at": row[3],
+                "average_delay_minutes": float(row[4]) if row[4] is not None else None,
+            }
+        except Exception:
+            return {"data_status": DataStatus(state="not_started", message="Prospective RailRadar archive is not available yet.")}
 
 
 class RailRadarLiveStatusRepository:

@@ -27,10 +27,17 @@ Available endpoints:
 - `GET http://127.0.0.1:8000/health`
 - `GET http://127.0.0.1:8000/v1/dashboard/network-overview`
 - `GET http://127.0.0.1:8000/v1/dashboard/pipeline-health`
+- `GET http://127.0.0.1:8000/v1/dashboard/delay-distribution`
+- `GET http://127.0.0.1:8000/v1/dashboard/station-hotspots`
+- `GET http://127.0.0.1:8000/v1/dashboard/daily-trend`
+- `GET http://127.0.0.1:8000/v1/dashboard/trains/{five_digit_train_number}`
+- `GET http://127.0.0.1:8000/v1/dashboard/prospective-archive`
 
 Each response contains a `data_status` object. `ready` means metrics come from the approved RSTGCN September 2024 load; other states are intentionally non-misleading unavailable/configuration states.
 
 The GitHub Pages deployment uses a committed aggregate-only static snapshot when no API is available. It is labeled `historical_snapshot` and intentionally omits live RailRadar lookups and all credentials.
+
+The expanded analysis panels are available when the local FastAPI server is running. They show RSTGCN September 2024 historical results and the separate prospective RailRadar archive; the two sources are never merged.
 
 ## Optional RailRadar live snapshot
 

@@ -2,7 +2,7 @@
 
 import os
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from railway_pipeline.dashboard.service import (
@@ -41,6 +41,28 @@ def create_app() -> FastAPI:
     @app.get("/v1/dashboard/prediction-summary")
     def prediction_summary():
         return repository.prediction_summary()
+
+    @app.get("/v1/dashboard/delay-distribution")
+    def delay_distribution():
+        return repository.delay_distribution() if hasattr(repository, "delay_distribution") else repository.insights_unavailable()
+
+    @app.get("/v1/dashboard/station-hotspots")
+    def station_hotspots(limit: int = Query(default=10, ge=1, le=25)):
+        return repository.station_hotspots(limit) if hasattr(repository, "station_hotspots") else repository.insights_unavailable()
+
+    @app.get("/v1/dashboard/daily-trend")
+    def daily_trend():
+        return repository.daily_trend() if hasattr(repository, "daily_trend") else repository.insights_unavailable()
+
+    @app.get("/v1/dashboard/trains/{train_number}")
+    def train_profile(train_number: str):
+        if not train_number.isdigit() or len(train_number) != 5:
+            raise HTTPException(status_code=422, detail="Train number must contain exactly five digits.")
+        return repository.train_profile(train_number) if hasattr(repository, "train_profile") else repository.insights_unavailable()
+
+    @app.get("/v1/dashboard/prospective-archive")
+    def prospective_archive():
+        return repository.prospective_archive_summary() if hasattr(repository, "prospective_archive_summary") else repository.insights_unavailable()
 
     @app.get("/v1/live/trains/{train_number}")
     def live_train_status(
