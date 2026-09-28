@@ -6,7 +6,7 @@ Set `RAILRADAR_API_KEY` only in the ignored local `.env` file. The Snowflake pas
 
 ## Data-driven watchlist and scheduling
 
-The scheduled archive selects the five train numbers with the most September 2024 observations in the approved RSTGCN fact mart. It runs at 8:00 AM and 8:00 PM local time while the user is logged in.
+The scheduled archive selects the five train numbers with the most September 2024 observations in the approved RSTGCN fact mart. It runs at 8:00 AM and 8:00 PM local time while the user is logged in. Windows is configured to wake from sleep when wake timers are permitted and to run a missed snapshot when the laptop next becomes available; a shut-down or offline laptop cannot collect a live snapshot at the scheduled instant.
 
 Run this once from PowerShell in the repository root. It securely prompts for the Snowflake password, stores it in Windows Credential Manager, creates the scheduled task, and writes the first five-train snapshot; no password is written to the repository, `.env`, task command, or logs.
 

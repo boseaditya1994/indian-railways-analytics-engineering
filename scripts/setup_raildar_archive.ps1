@@ -30,8 +30,9 @@ if (-not $SkipTask) {
         (New-ScheduledTaskTrigger -Daily -At 8:00AM),
         (New-ScheduledTaskTrigger -Daily -At 8:00PM)
     )
+    $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -WakeToRun -MultipleInstances IgnoreNew
     $principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Limited
-    Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $triggers -Principal $principal -Description 'Archives the RSTGCN-derived five-train RailRadar watchlist twice daily.' -Force | Out-Null
+    Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $triggers -Settings $settings -Principal $principal -Description 'Archives the RSTGCN-derived five-train RailRadar watchlist twice daily.' -Force | Out-Null
     Write-Host "Scheduled task '$taskName' created for 8:00 AM and 8:00 PM while you are logged in."
 }
 
