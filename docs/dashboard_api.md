@@ -29,3 +29,11 @@ Available endpoints:
 - `GET http://127.0.0.1:8000/v1/dashboard/pipeline-health`
 
 Each response contains a `data_status` object. `ready` means metrics come from the approved RSTGCN September 2024 load; other states are intentionally non-misleading unavailable/configuration states.
+
+## Optional RailRadar live snapshot
+
+For personal, on-demand live lookup only, set `RAILRADAR_API_KEY` in the ignored local `.env` file and restart the API. The key is server-side only. This endpoint returns a compact current snapshot and does not save RailRadar responses in Snowflake or local files:
+
+`GET http://127.0.0.1:8000/v1/live/trains/12919`
+
+The API validates five-digit train numbers, caches an identical lookup for 30 seconds, and returns a clear `rate_limited` state if RailRadar returns HTTP 429. Do not use it for bulk polling or historical retention unless RailRadar explicitly approves that scope.

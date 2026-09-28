@@ -27,3 +27,19 @@ class PipelineHealth(BaseModel):
     last_run_status: str | None = None
     records_received: int | None = None
     records_rejected: int | None = None
+
+
+class LiveTrainStatus(BaseModel):
+    """A non-persisted, provider-attributed current train snapshot."""
+
+    data_status: DataStatus
+    train_number: str | None = None
+    train_name: str | None = None
+    journey_date: str | None = None
+    status: str | None = None
+    delay_minutes: float | None = None
+    current_station_code: str | None = None
+    next_station_code: str | None = None
+    next_station_name: str | None = None
+    provider_updated_at: datetime | None = None
+    cached: bool = False

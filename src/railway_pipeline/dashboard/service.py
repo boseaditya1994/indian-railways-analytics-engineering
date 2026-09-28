@@ -3,9 +3,18 @@
 from __future__ import annotations
 
 import os
+import re
+import time
 from typing import Protocol
 
-from railway_pipeline.dashboard.contracts import DataStatus, NetworkOverview, PipelineHealth
+import requests
+
+from railway_pipeline.dashboard.contracts import (
+    DataStatus,
+    LiveTrainStatus,
+    NetworkOverview,
+    PipelineHealth,
+)
 
 
 class DashboardMartRepository(Protocol):
@@ -150,3 +159,78 @@ class SnowflakeDashboardMartRepository:
             )
         except Exception:
             return PipelineHealth(data_status=self._unavailable_status())
+
+
+class RailRadarLiveStatusRepository:
+    """On-demand RailRadar lookup with a small in-memory cache and no persistence."""
+
+    endpoint_template = "https://api.railradar.in/v1/trains/{train_number}/live"
+    cache_ttl_seconds = 30
+
+    def __init__(self, session: requests.Session | None = None) -> None:
+        self.api_key = os.getenv("RAILRADAR_API_KEY")
+        self.session = session or requests.Session()
+        self._cache: dict[tuple[str, str | None], tuple[float, LiveTrainStatus]] = {}
+
+    @property
+    def configured(self) -> bool:
+        return bool(self.api_key)
+
+    def get_live_status(self, train_number: str, journey_date: str | None = None) -> LiveTrainStatus:
+        if not re.fullmatch(r"\d{5}", train_number):
+            return LiveTrainStatus(
+                data_status=DataStatus(state="invalid_request", message="Train number must contain exactly five digits.")
+            )
+        if not self.configured:
+            return LiveTrainStatus(
+                data_status=DataStatus(
+                    state="not_configured", message="RailRadar live-status key is not configured on the API server."
+                )
+            )
+        cache_key = (train_number, journey_date)
+        cached = self._cache.get(cache_key)
+        if cached and time.monotonic() - cached[0] < self.cache_ttl_seconds:
+            return cached[1].model_copy(update={"cached": True})
+        try:
+            params: dict[str, str] = {"haltsOnly": "true"}
+            if journey_date:
+                params["date"] = journey_date
+            response = self.session.get(
+                self.endpoint_template.format(train_number=train_number),
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                params=params,
+                timeout=15,
+            )
+            if response.status_code == 429:
+                return LiveTrainStatus(
+                    data_status=DataStatus(
+                        state="rate_limited", message="RailRadar request limit reached; please retry later."
+                    )
+                )
+            response.raise_for_status()
+            payload = response.json().get("data", {})
+            next_halt = payload.get("nextHalt") or {}
+            current_location = payload.get("currentLocation") or {}
+            status = LiveTrainStatus(
+                data_status=DataStatus(
+                    state="ready",
+                    message="Live snapshot supplied by RailRadar; it is not persisted as historical data.",
+                ),
+                train_number=str(payload.get("trainNumber") or train_number),
+                train_name=payload.get("trainName"),
+                journey_date=payload.get("startDate"),
+                status=payload.get("status"),
+                delay_minutes=payload.get("delayMinutes"),
+                current_station_code=current_location.get("stationCode"),
+                next_station_code=next_halt.get("stationCode"),
+                next_station_name=next_halt.get("stationName"),
+                provider_updated_at=payload.get("lastUpdatedAt"),
+            )
+            self._cache[cache_key] = (time.monotonic(), status)
+            return status
+        except requests.RequestException:
+            return LiveTrainStatus(
+                data_status=DataStatus(
+                    state="provider_unavailable", message="Live status is temporarily unavailable from RailRadar."
+                )
+            )
