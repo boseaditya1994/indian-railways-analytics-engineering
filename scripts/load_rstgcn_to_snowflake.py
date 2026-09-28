@@ -11,7 +11,6 @@ import snowflake.connector
 from railway_pipeline.config.settings import Settings
 from railway_pipeline.loaders.rstgcn_loader import load_rstgcn
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 

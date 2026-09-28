@@ -1,7 +1,6 @@
 from datetime import date
 
 import pytest
-import requests
 
 from railway_pipeline.weather.open_meteo import OpenMeteoHistoricalClient, WeatherSourceError
 

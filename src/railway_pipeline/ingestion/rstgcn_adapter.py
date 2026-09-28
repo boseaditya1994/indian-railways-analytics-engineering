@@ -10,7 +10,6 @@ import csv
 from collections.abc import Iterator
 from pathlib import Path
 
-
 DELAY_COLUMNS = {"train", "date", "station", "sch_arr", "act_arr", "arr_delay", "sch_dep", "act_dep", "dep_delay"}
 ROUTE_COLUMNS = {"stnSerialNumber", "trainNumber", "station_code"}
 

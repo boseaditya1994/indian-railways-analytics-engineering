@@ -16,7 +16,6 @@ from snowflake.connector.pandas_tools import write_pandas
 
 from railway_pipeline.config.settings import Settings
 
-
 ROOT = Path(__file__).resolve().parents[1]
 RAW_TABLE = "RAIL_DELAY_ANALYTICS.RAW.TRAIN_SCHEDULE_STOPS"
 AUDIT_TABLE = "RAIL_DELAY_ANALYTICS.AUDIT.INGESTION_RUN_AUDIT"

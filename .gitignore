@@ -16,6 +16,7 @@ ml/artifacts/*
 !ml/artifacts/.gitkeep
 dashboards/react/node_modules/
 dashboards/react/dist/
+*.tsbuildinfo
 data/raw/*
 !data/raw/.gitkeep
 data/provenance/*.json

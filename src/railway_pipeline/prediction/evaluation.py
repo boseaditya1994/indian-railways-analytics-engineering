@@ -5,11 +5,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TypeVar
 
 from railway_pipeline.prediction.metrics import mean_absolute_error, root_mean_squared_error
-
-T = TypeVar("T")
 
 
 @dataclass(frozen=True)
@@ -25,7 +22,7 @@ class EvaluationSummary:
         return self.mae < self.baseline_mae
 
 
-def chronological_split(
+def chronological_split[T](
     rows: Sequence[T], timestamps: Sequence[datetime], training_fraction: float = 0.7, validation_fraction: float = 0.15
 ) -> tuple[list[T], list[T], list[T]]:
     """Return chronological train/validation/test partitions; never randomize observations."""

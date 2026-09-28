@@ -12,7 +12,7 @@ class TrainRouteMeanBaseline:
     global_mean: float = 0.0
     means: dict[tuple[str, str], float] = field(default_factory=dict)
 
-    def fit(self, observations: Iterable[tuple[str, str, float]]) -> "TrainRouteMeanBaseline":
+    def fit(self, observations: Iterable[tuple[str, str, float]]) -> TrainRouteMeanBaseline:
         totals: dict[tuple[str, str], float] = defaultdict(float)
         counts: dict[tuple[str, str], int] = defaultdict(int)
         all_values: list[float] = []

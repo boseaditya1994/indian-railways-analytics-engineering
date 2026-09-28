@@ -7,7 +7,6 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
-
 REQUIRED_COLUMNS = {"train_number", "journey_date", "station_code", "station_sequence"}
 
 

@@ -11,7 +11,6 @@ from pathlib import Path
 
 from railway_pipeline.config.settings import Settings
 
-
 SQL_FILES = (
     "snowflake/setup/001_database_and_schemas.sql",
     "snowflake/objects/ingestion_audit.sql",

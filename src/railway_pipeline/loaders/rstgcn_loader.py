@@ -18,7 +18,6 @@ from snowflake.connector.pandas_tools import write_pandas
 
 from railway_pipeline.models.running_event import TrainRunningEvent
 
-
 RAW_TABLE = "RAIL_DELAY_ANALYTICS.RAW.TRAIN_RUNNING_EVENTS"
 AUDIT_TABLE = "RAIL_DELAY_ANALYTICS.AUDIT.INGESTION_RUN_AUDIT"
 STAGE_TABLE = "RSTGCN_RUNNING_EVENTS_STAGE"
