@@ -1,5 +1,7 @@
 """FastAPI application with server-side, read-only Snowflake mart access."""
 
+import os
+
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -12,9 +14,11 @@ from railway_pipeline.dashboard.service import (
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Rail Delay Dashboard API", version="0.1.0")
+    default_origins = "http://127.0.0.1:5173,http://localhost:5173"
+    cors_origins = os.getenv("DASHBOARD_CORS_ORIGINS", default_origins)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
+        allow_origins=[origin.strip() for origin in cors_origins.split(",") if origin.strip()],
         allow_methods=["GET"],
         allow_headers=[],
     )

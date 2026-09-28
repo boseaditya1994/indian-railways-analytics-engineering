@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: indian-railways-dashboard-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -e ".[dashboard,warehouse]"
+    startCommand: uvicorn railway_pipeline.dashboard.api:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: DASHBOARD_CORS_ORIGINS
+        value: https://boseaditya1994.github.io
+      - key: SNOWFLAKE_ACCOUNT
+        sync: false
+      - key: SNOWFLAKE_USER
+        sync: false
+      - key: SNOWFLAKE_PASSWORD
+        sync: false
+      - key: SNOWFLAKE_ROLE
+        value: RAIL_DELAY_DASHBOARD_READER
+      - key: SNOWFLAKE_WAREHOUSE
+        value: COMPUTE_WH

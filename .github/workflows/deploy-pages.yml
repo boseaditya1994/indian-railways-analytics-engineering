@@ -27,6 +27,10 @@ jobs:
         with:
           node-version: '24'
       - working-directory: dashboards/react
+        env:
+          VITE_DASHBOARD_API_BASE_URL: ${{ vars.DASHBOARD_API_BASE_URL }}
+          # RailRadar's sandbox is personal-use only, so do not proxy it to public visitors.
+          VITE_ENABLE_LIVE_LOOKUP: "false"
         run: npm install && npm run build
       - uses: actions/upload-pages-artifact@v3
         with:

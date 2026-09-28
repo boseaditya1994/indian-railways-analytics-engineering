@@ -27,6 +27,7 @@ type PredictionSummary = {
   accepted_for_prediction?: boolean | null;
 };
 const apiBase = import.meta.env.VITE_DASHBOARD_API_BASE_URL ?? "";
+const liveLookupEnabled = import.meta.env.VITE_ENABLE_LIVE_LOOKUP !== "false";
 const number = (value?: number | null, digits = 0) => value == null ? "—" : value.toLocaleString(undefined, { maximumFractionDigits: digits });
 const dateTime = (value?: string | null) => value ? new Date(value).toLocaleString() : "Not available";
 
@@ -99,7 +100,7 @@ function App() {
 
       <section className="grid">
         <article className="panel"><h2>Network overview</h2><p className="summary">Median arrival delay: <strong>{overview?.median_arrival_delay_minutes == null ? "—" : `${number(overview.median_arrival_delay_minutes, 1)} min`}</strong></p><p className="empty">{number(overview?.station_stop_observations)} station-stop observations from {overview?.coverage_start_date ?? "—"} to {overview?.coverage_end_date ?? "—"}. Historical RSTGCN coverage only; live RailRadar lookups are shown separately and are not retained.</p></article>
-        {!staticMode && <article className="panel">
+        {!staticMode && liveLookupEnabled && <article className="panel">
           <h2>Live train status</h2>
           <form className="live-form" onSubmit={loadLiveStatus}>
             <label htmlFor="live-train-number">Five-digit train number</label>

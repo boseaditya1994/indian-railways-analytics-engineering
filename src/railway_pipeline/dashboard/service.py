@@ -50,7 +50,7 @@ class SnowflakeDashboardMartRepository:
         self.password = os.getenv("SNOWFLAKE_PASSWORD")
         self.account = os.getenv("SNOWFLAKE_ACCOUNT")
         self.user = os.getenv("SNOWFLAKE_USER")
-        self.role = os.getenv("SNOWFLAKE_ROLE", "ACCOUNTADMIN")
+        self.role = os.getenv("SNOWFLAKE_ROLE", "RAIL_DELAY_DASHBOARD_READER")
         self.warehouse = os.getenv("SNOWFLAKE_WAREHOUSE", "COMPUTE_WH")
 
     @property
