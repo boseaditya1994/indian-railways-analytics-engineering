@@ -15,5 +15,9 @@ h1 { font-size: clamp(2rem, 5vw, 3.5rem); margin: 4px 0; letter-spacing: -.04em;
 .metric strong { font-size: 2rem; margin: 8px 0; } h2 { margin: 0 0 32px; font-size: 1.1rem; }
 .empty { min-height: 96px; display: grid; place-items: center; text-align: center; border: 1px dashed #3d536c; margin: 0; padding: 16px; }
 .summary { color: #d4dde8; margin: 0 0 16px; } .summary strong { color: #69d2c2; }
+.live-form { display: grid; gap: 8px; margin-bottom: 16px; } .live-form label { color: #aebdce; font-size: .9rem; }
+.live-form input { background: #09111f; border: 1px solid #3d536c; border-radius: 8px; color: #e8edf4; font: inherit; padding: 10px; }
+.live-form button { background: #69d2c2; border: 0; border-radius: 8px; color: #09111f; cursor: pointer; font-weight: 700; padding: 10px; }
+.live-form button:disabled { cursor: wait; opacity: .65; } .live-result p { margin: 8px 0; }
 footer { border-top: 1px solid #24344d; color: #9aaabd; font-size: .8rem; margin-top: 40px; padding-top: 20px; }
 @media (max-width: 760px) { header { display: block; } .status { display: inline-block; margin-top: 16px; } .metrics, .grid { grid-template-columns: 1fr; } }

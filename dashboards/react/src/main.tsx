@@ -14,6 +14,12 @@ type PipelineHealth = {
   data_status: DataStatus; last_run_status?: string | null; records_received?: number | null;
   records_rejected?: number | null;
 };
+type LiveTrainStatus = {
+  data_status: DataStatus; train_number?: string | null; train_name?: string | null;
+  journey_date?: string | null; status?: string | null; delay_minutes?: number | null;
+  current_station_code?: string | null; next_station_code?: string | null;
+  next_station_name?: string | null; provider_updated_at?: string | null; cached?: boolean;
+};
 const apiBase = import.meta.env.VITE_DASHBOARD_API_BASE_URL ?? "";
 const number = (value?: number | null, digits = 0) => value == null ? "—" : value.toLocaleString(undefined, { maximumFractionDigits: digits });
 const dateTime = (value?: string | null) => value ? new Date(value).toLocaleString() : "Not available";
@@ -22,6 +28,9 @@ function App() {
   const [overview, setOverview] = useState<NetworkOverview | null>(null);
   const [health, setHealth] = useState<PipelineHealth | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [liveTrainNumber, setLiveTrainNumber] = useState("12919");
+  const [liveStatus, setLiveStatus] = useState<LiveTrainStatus | null>(null);
+  const [liveLoading, setLiveLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -40,6 +49,18 @@ function App() {
     { label: "Average arrival delay", value: overview?.average_arrival_delay_minutes == null ? "—" : `${number(overview.average_arrival_delay_minutes, 1)} min`, detail: "Across observed station stops" },
     { label: "On time or early", value: overview?.on_time_or_early_percent == null ? "—" : `${number(overview.on_time_or_early_percent, 1)}%`, detail: "Arrival delay at or below zero" }
   ];
+  const loadLiveStatus = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLiveLoading(true);
+    try {
+      const response = await fetch(`${apiBase}/v1/live/trains/${encodeURIComponent(liveTrainNumber)}`);
+      setLiveStatus(await response.json() as LiveTrainStatus);
+    } catch {
+      setLiveStatus({ data_status: { state: "provider_unavailable", message: "Live status could not be retrieved." } });
+    } finally {
+      setLiveLoading(false);
+    }
+  };
   return (
     <main>
       <header>
@@ -65,7 +86,15 @@ function App() {
 
       <section className="grid">
         <article className="panel"><h2>Network overview</h2><p className="summary">Median arrival delay: <strong>{overview?.median_arrival_delay_minutes == null ? "—" : `${number(overview.median_arrival_delay_minutes, 1)} min`}</strong></p><p className="empty">The published source covers September 2024 historical observations only.</p></article>
-        <article className="panel"><h2>Train punctuality</h2><p className="summary">Historical aggregate metrics are sourced from the validated Snowflake mart.</p><p className="empty">Train-level exploration is the next API enhancement.</p></article>
+        <article className="panel">
+          <h2>Live train status</h2>
+          <form className="live-form" onSubmit={loadLiveStatus}>
+            <label htmlFor="live-train-number">Five-digit train number</label>
+            <input id="live-train-number" value={liveTrainNumber} onChange={(event) => setLiveTrainNumber(event.target.value)} inputMode="numeric" pattern="[0-9]{5}" maxLength={5} required />
+            <button type="submit" disabled={liveLoading}>{liveLoading ? "Checking…" : "Check live status"}</button>
+          </form>
+          {liveStatus ? <div className="live-result"><p className="summary">{liveStatus.data_status.message}</p>{liveStatus.data_status.state === "ready" && <><p><strong>{liveStatus.train_name}</strong> ({liveStatus.train_number}) · {liveStatus.status}</p><p>Delay: <strong>{number(liveStatus.delay_minutes, 1)} min</strong> · Current: {liveStatus.current_station_code ?? "—"} · Next: {liveStatus.next_station_name ?? liveStatus.next_station_code ?? "—"}</p><small>RailRadar snapshot at {dateTime(liveStatus.provider_updated_at)}{liveStatus.cached ? " (cached)" : ""}. Not retained as history.</small></>}</div> : <p className="empty">Enter a train number for a personal-use live RailRadar snapshot.</p>}
+        </article>
         <article className="panel"><h2>Delay prediction</h2><EmptyState text="Predictions appear only after chronological baseline/ML evaluation." /></article>
         <article className="panel"><h2>Pipeline health</h2><p className="summary">Latest run: <strong>{health?.last_run_status ?? "—"}</strong></p><p className="empty">Received {number(health?.records_received)} records; rejected {number(health?.records_rejected)}. Completed {dateTime(health?.data_status.last_successful_pipeline_at)}.</p></article>
       </section>
