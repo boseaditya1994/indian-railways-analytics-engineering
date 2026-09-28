@@ -1,0 +1,33 @@
+{
+  "overview": {
+    "data_status": {
+      "state": "historical_snapshot",
+      "message": "Static portfolio snapshot from the approved RSTGCN September 2024 source. Live provider lookups are intentionally unavailable on this hosted site.",
+      "last_successful_pipeline_at": "2026-09-27T02:13:37.199000"
+    },
+    "journeys_analysed": 57485,
+    "stations": 4735,
+    "average_arrival_delay_minutes": 32.8981613,
+    "median_arrival_delay_minutes": 8.0,
+    "on_time_or_early_percent": 35.775,
+    "station_stop_observations": 1282263,
+    "coverage_start_date": "2024-09-01",
+    "coverage_end_date": "2024-09-30"
+  },
+  "health": {
+    "data_status": {
+      "state": "historical_snapshot",
+      "message": "Static portfolio snapshot.",
+      "last_successful_pipeline_at": "2026-09-27T02:13:37.199000"
+    },
+    "last_run_status": "succeeded",
+    "records_received": 1282325,
+    "records_rejected": 62
+  },
+  "prediction": {
+    "data_status": {
+      "state": "not_evaluated",
+      "message": "Prediction metrics are available only in the authenticated local dashboard after chronological evaluation."
+    }
+  }
+}

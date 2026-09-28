@@ -38,6 +38,7 @@ function App() {
   const [liveStatus, setLiveStatus] = useState<LiveTrainStatus | null>(null);
   const [liveLoading, setLiveLoading] = useState(false);
   const [prediction, setPrediction] = useState<PredictionSummary | null>(null);
+  const [staticMode, setStaticMode] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -48,7 +49,10 @@ function App() {
       setOverview(network as NetworkOverview);
       setHealth(pipeline as PipelineHealth);
       setPrediction(evaluatedPrediction as PredictionSummary);
-    }).catch(() => setError("The dashboard API is unreachable. Start the local API or configure VITE_DASHBOARD_API_BASE_URL."));
+    }).catch(() => fetch(`${import.meta.env.BASE_URL}dashboard_snapshot.json`).then((response) => response.json()).then((snapshot) => {
+      setOverview(snapshot.overview as NetworkOverview); setHealth(snapshot.health as PipelineHealth);
+      setPrediction(snapshot.prediction as PredictionSummary); setStaticMode(true);
+    }).catch(() => setError("The dashboard API and static portfolio snapshot are unavailable.")));
   }, []);
 
   const status = overview?.data_status;
@@ -95,7 +99,7 @@ function App() {
 
       <section className="grid">
         <article className="panel"><h2>Network overview</h2><p className="summary">Median arrival delay: <strong>{overview?.median_arrival_delay_minutes == null ? "—" : `${number(overview.median_arrival_delay_minutes, 1)} min`}</strong></p><p className="empty">{number(overview?.station_stop_observations)} station-stop observations from {overview?.coverage_start_date ?? "—"} to {overview?.coverage_end_date ?? "—"}. Historical RSTGCN coverage only; live RailRadar lookups are shown separately and are not retained.</p></article>
-        <article className="panel">
+        {!staticMode && <article className="panel">
           <h2>Live train status</h2>
           <form className="live-form" onSubmit={loadLiveStatus}>
             <label htmlFor="live-train-number">Five-digit train number</label>
@@ -103,7 +107,7 @@ function App() {
             <button type="submit" disabled={liveLoading}>{liveLoading ? "Checking…" : "Check live status"}</button>
           </form>
           {liveStatus ? <div className="live-result"><p className="summary">{liveStatus.data_status.message}</p>{liveStatus.data_status.state === "ready" && <><p><strong>{liveStatus.train_name}</strong> ({liveStatus.train_number}) · {liveStatus.status}</p><p>Delay: <strong>{number(liveStatus.delay_minutes, 1)} min</strong> · Current: {liveStatus.current_station_code ?? "—"} · Next: {liveStatus.next_station_name ?? liveStatus.next_station_code ?? "—"}</p><small>RailRadar snapshot at {dateTime(liveStatus.provider_updated_at)}{liveStatus.cached ? " (cached)" : ""}. Not retained as history.</small></>}</div> : <p className="empty">Enter a train number for a personal-use live RailRadar snapshot.</p>}
-        </article>
+        </article>}
         <article className="panel"><h2>Delay prediction</h2>{prediction?.data_status.state === "ready" ? <><p className="summary">Baseline MAE: <strong>{number(prediction.mae_minutes, 2)} min</strong></p><p className="empty">{number(prediction.evaluation_rows)} untouched chronological holdout rows · RMSE {number(prediction.rmse_minutes, 2)} min · global-mean MAE {number(prediction.global_mean_mae_minutes, 2)} min · {prediction.accepted_for_prediction ? "improves on the global-mean reference." : "does not improve on the global-mean reference."}</p></> : <EmptyState text={prediction?.data_status.message ?? "Loading prediction-evaluation status…"} />}</article>
         <article className="panel"><h2>Pipeline health</h2><p className="summary">Latest run: <strong>{health?.last_run_status ?? "—"}</strong></p><p className="empty">Received {number(health?.records_received)} records; rejected {number(health?.records_rejected)}. Completed {dateTime(health?.data_status.last_successful_pipeline_at)}.</p></article>
       </section>

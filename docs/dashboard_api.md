@@ -30,6 +30,8 @@ Available endpoints:
 
 Each response contains a `data_status` object. `ready` means metrics come from the approved RSTGCN September 2024 load; other states are intentionally non-misleading unavailable/configuration states.
 
+The GitHub Pages deployment uses a committed aggregate-only static snapshot when no API is available. It is labeled `historical_snapshot` and intentionally omits live RailRadar lookups and all credentials.
+
 ## Optional RailRadar live snapshot
 
 For personal, on-demand live lookup only, set `RAILRADAR_API_KEY` in the ignored local `.env` file and restart the API. The key is server-side only. This endpoint returns a compact current snapshot and does not save RailRadar responses in Snowflake or local files:
