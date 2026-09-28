@@ -8,7 +8,7 @@ Set `RAILRADAR_API_KEY` only in the ignored local `.env` file. The Snowflake pas
 
 The scheduled archive selects the five train numbers with the most September 2024 observations in the approved RSTGCN fact mart. It runs at 8:00 AM and 8:00 PM local time while the user is logged in.
 
-Run this once from PowerShell in the repository root. It securely prompts for the Snowflake password, stores it in Windows Credential Manager, and creates the scheduled task; no password is written to the repository, `.env`, task command, or logs.
+Run this once from PowerShell in the repository root. It securely prompts for the Snowflake password, stores it in Windows Credential Manager, creates the scheduled task, and writes the first five-train snapshot; no password is written to the repository, `.env`, task command, or logs.
 
 ```powershell
 .\scripts\setup_raildar_archive.ps1

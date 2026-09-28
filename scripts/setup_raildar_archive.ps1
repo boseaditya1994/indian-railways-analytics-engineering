@@ -35,4 +35,7 @@ if (-not $SkipTask) {
     Write-Host "Scheduled task '$taskName' created for 8:00 AM and 8:00 PM while you are logged in."
 }
 
+& $runner
+if ($LASTEXITCODE -ne 0) { throw "Initial RailRadar archive failed with exit code $LASTEXITCODE" }
+
 Write-Host 'Secure RailRadar archive setup complete.'
